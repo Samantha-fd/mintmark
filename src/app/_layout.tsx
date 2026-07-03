@@ -1,18 +1,71 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import {
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    useFonts,
+} from '@expo-google-fonts/inter';
+import { Image as ExpoImage } from 'expo-image';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { PermissionGate } from '@/components/permission-gate';
+import { ToastProvider } from '@/components/toast';
+import { useTheme } from '@/hooks/use-theme';
 
-SplashScreen.preventAutoHideAsync();
+export default function RootLayout() {
+  const theme = useTheme();
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  if (!fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: theme.background,
+        }}
+      >
+        <ExpoImage
+          source={require('@/assets/images/splash-icon.png')}
+          style={{ width: 120, height: 120 }}
+          contentFit="contain"
+        />
+      </View>
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ToastProvider>
+        <PermissionGate>
+          <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: theme.background },
+            headerTintColor: theme.text,
+            headerTitleStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 17 },
+            headerShadowVisible: false,
+            contentStyle: { backgroundColor: theme.background },
+          }}
+        >
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+          <Stack.Screen name="create" options={{ title: 'New Logo' }} />
+          <Stack.Screen name="pick-logo" options={{ title: 'Choose a Logo' }} />
+          <Stack.Screen name="editor" options={{ title: 'Add logo to photo' }} />
+          <Stack.Screen name="logo/[id]" options={{ title: 'Logo' }} />
+          <Stack.Screen name="stamped/[id]" options={{ title: 'Logo Photo' }} />
+          </Stack>
+        </PermissionGate>
+        <StatusBar style="auto" />
+      </ToastProvider>
+    </GestureHandlerRootView>
   );
 }
