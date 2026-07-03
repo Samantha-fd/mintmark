@@ -50,6 +50,16 @@ export default function DrawerLayout() {
           ),
         }}
       />
+      <Drawer.Screen
+        name="privacy"
+        options={{
+          title: 'Privacy Policy',
+          drawerLabel: 'Privacy Policy',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="shield-checkmark-outline" size={size} color={color} />
+          ),
+        }}
+      />
     </Drawer>
   );
 }
