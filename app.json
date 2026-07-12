@@ -2,7 +2,7 @@
   "expo": {
     "name": "Markly",
     "slug": "markly",
-    "owner": "indexesolutions",
+    "owner": "samanthamasara1234",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -24,9 +24,12 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ],
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -66,7 +69,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "62f9b469-89ec-45be-802d-c173f3be5b0e"
+        "projectId": "e7ad425b-2ce0-458b-963c-21d309660daa"
       }
     }
   }
