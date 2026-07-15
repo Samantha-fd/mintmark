@@ -41,7 +41,7 @@ export default function PrivacyPolicyScreen() {
       <Section title="Sharing">
         When you use the Share button, your photo is handed to the app you
         choose (for example WhatsApp or Instagram). From that point the
-        receiving app's own privacy policy applies.
+        receiving app’s own privacy policy applies.
       </Section>
 
       <Section title="Accounts and tracking">
@@ -50,7 +50,7 @@ export default function PrivacyPolicyScreen() {
       </Section>
 
       <Section title="Deleting your data">
-        All of Markly's data lives on your device. Deleting a logo or stamped
+        All of Markly’s data lives on your device. Deleting a logo or stamped
         photo inside the app removes it permanently, and uninstalling the app
         removes everything the app stored. Photos you saved to your gallery
         remain in your gallery until you delete them there.
@@ -61,9 +61,9 @@ export default function PrivacyPolicyScreen() {
         including children — because it collects no information at all.
       </Section>
 
-      <Section title="Changes and contact">
+      <Section title="Changes">
         If this policy ever changes, the updated version will appear on this
-        page with a new date. Questions are welcome at samymasara@gmail.com.
+        page with a new date.
       </Section>
     </ScrollView>
   );

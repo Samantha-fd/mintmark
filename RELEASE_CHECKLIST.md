@@ -10,6 +10,7 @@
 
 - [x] Privacy policy screen in the hamburger menu (`src/app/(drawer)/privacy.tsx`) — accurate: app makes no network calls at all
 - [x] **Hosted at a public URL** (2026-07-10): `https://portfolio-website-xi-inky.vercel.app/markly/privacy` — paste this into Play Console. Source lives in the portfolio repo (`markly/privacy/index.html`); keep the URL alive. A dedicated Markly site can replace it later (the Play Console URL is editable anytime).
+- [ ] **Add a contact email back to the privacy policy** — the personal Gmail was removed from the in-app "Changes and contact" section (2026-07-15). Before submission, add a public-facing contact address (consider a dedicated alias rather than the personal inbox) to both the in-app screen and the hosted copy in the portfolio repo. Play Console requires a public contact email in the listing anyway.
 
 ## 3. Store listing assets
 
