@@ -18,11 +18,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ActionBar } from '@/components/action-bar';
 import { Button } from '@/components/button';
 import { useToast } from '@/components/toast';
 import { useTheme } from '@/hooks/use-theme';
 import { makeCheckerTile } from '@/lib/image-processing';
 import { deleteLogo, getLogo, renameLogo } from '@/lib/logo-store';
+import { encodePhotos } from '@/lib/photo-params';
 import type { Logo } from '@/lib/types';
 
 export default function LogoDetailScreen() {
@@ -81,16 +83,16 @@ export default function LogoDetailScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 20,
+      orderedSelection: true,
     });
     if (result.canceled) return;
-    const a = result.assets[0];
     router.push({
       pathname: '/editor',
       params: {
         logoId: logo.id,
-        photoUri: a.uri,
-        photoWidth: String(a.width),
-        photoHeight: String(a.height),
+        photos: encodePhotos(result.assets),
       },
     });
   };
@@ -165,18 +167,27 @@ export default function LogoDetailScreen() {
         </View>
 
         <View style={styles.actions}>
-          <Button label="Use on a photo" icon="image-outline" onPress={useOnPhoto} />
-          <Button
-            label="Edit logo"
-            icon="create-outline"
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/create', params: { editId: logo.id } })}
-          />
-          <Button
-            label="Delete logo"
-            icon="trash-outline"
-            variant="secondary"
-            onPress={confirmDelete}
+          <ActionBar
+            items={[
+              {
+                icon: 'image-outline',
+                label: 'Use on photo',
+                tone: 'accent',
+                onPress: useOnPhoto,
+              },
+              {
+                icon: 'create-outline',
+                label: 'Edit',
+                onPress: () =>
+                  router.push({ pathname: '/create', params: { editId: logo.id } }),
+              },
+              {
+                icon: 'trash-outline',
+                label: 'Delete',
+                tone: 'danger',
+                onPress: confirmDelete,
+              },
+            ]}
           />
         </View>
       </ScrollView>
