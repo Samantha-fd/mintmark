@@ -184,6 +184,12 @@ export default function LogoLibraryScreen() {
           icon="add-circle-outline"
           onPress={() => router.push('/create')}
         />
+        <Button
+          label="Text watermark"
+          icon="text-outline"
+          variant="secondary"
+          onPress={() => router.push('/create-text')}
+        />
       </View>
     </View>
   );
