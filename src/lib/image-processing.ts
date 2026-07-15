@@ -1,10 +1,14 @@
+import { Inter_700Bold } from '@expo-google-fonts/inter';
 import {
     AlphaType,
     ColorType,
+    FontStyle,
     ImageFormat,
     Skia,
     type SkImage,
+    type SkTypeface,
 } from '@shopify/react-native-skia';
+import { Asset } from 'expo-asset';
 
 /**
  * Logos are capped at this size on their longest side. Big enough to stay
@@ -246,6 +250,135 @@ export async function processLogo(uri: string, options: LogoOptions): Promise<Sk
   let image = downscale(await loadImage(uri));
   if (options.removeBg) image = removeBackground(image, options.tolerance);
   return trimTransparent(image);
+}
+
+export type PlacementAnalysis = {
+  /** which corner is calmest: 0 = left/top, 1 = right/bottom */
+  quietCorner: { x: 0 | 1; y: 0 | 1 };
+  /** centre of visual interest (the subject), as fractions of the photo */
+  subject: { cx: number; cy: number };
+};
+
+/**
+ * Cheap saliency pass on a thumbnail: edge energy per region. The calmest
+ * corner is where a watermark looks cleanest; the energy centroid is where
+ * it protects best (removal would have to reconstruct the subject).
+ */
+export async function analyzePhoto(uri: string): Promise<PlacementAnalysis> {
+  const image = downscale(await loadImage(uri), 96);
+  const w = image.width();
+  const h = image.height();
+  const px = getPixels(image);
+
+  const lum = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    lum[i] = 0.299 * px[i * 4] + 0.587 * px[i * 4 + 1] + 0.114 * px[i * 4 + 2];
+  }
+  const energy = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x;
+      energy[i] = Math.abs(lum[i + 1] - lum[i - 1]) + Math.abs(lum[i + w] - lum[i - w]);
+    }
+  }
+
+  // corner calm: energy sum over each ~35% corner block; bottom corners get
+  // a small head start because watermarks read most natural there
+  const bw = Math.max(1, Math.floor(w * 0.35));
+  const bh = Math.max(1, Math.floor(h * 0.35));
+  const blockEnergy = (x0: number, y0: number) => {
+    let sum = 0;
+    for (let y = y0; y < y0 + bh; y++) {
+      for (let x = x0; x < x0 + bw; x++) sum += energy[y * w + x];
+    }
+    return sum;
+  };
+  const corners: { x: 0 | 1; y: 0 | 1; score: number }[] = [
+    { x: 0, y: 0, score: blockEnergy(0, 0) },
+    { x: 1, y: 0, score: blockEnergy(w - bw, 0) },
+    { x: 0, y: 1, score: blockEnergy(0, h - bh) * 0.85 },
+    { x: 1, y: 1, score: blockEnergy(w - bw, h - bh) * 0.85 },
+  ];
+  corners.sort((a, b) => a.score - b.score);
+
+  // subject: energy-weighted centroid, squared to favour strong edges,
+  // clamped so the suggestion never hugs an edge
+  let sx = 0;
+  let sy = 0;
+  let total = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const e = energy[y * w + x] ** 2;
+      sx += x * e;
+      sy += y * e;
+      total += e;
+    }
+  }
+  const cx = total > 0 ? sx / total / w : 0.5;
+  const cy = total > 0 ? sy / total / h : 0.5;
+
+  return {
+    quietCorner: { x: corners[0].x, y: corners[0].y },
+    subject: {
+      cx: Math.min(0.7, Math.max(0.3, cx)),
+      cy: Math.min(0.7, Math.max(0.3, cy)),
+    },
+  };
+}
+
+let textTypeface: SkTypeface | null | undefined;
+
+/** Inter Bold (the app's own typeface) with a system-font fallback. */
+async function loadTextTypeface(): Promise<SkTypeface | null> {
+  if (textTypeface !== undefined) return textTypeface;
+  try {
+    const asset = Asset.fromModule(Inter_700Bold);
+    await asset.downloadAsync();
+    if (asset.localUri) {
+      const data = await Skia.Data.fromURI(asset.localUri);
+      const face = Skia.Typeface.MakeFreeTypeFaceFromData(data);
+      if (face) {
+        textTypeface = face;
+        return face;
+      }
+    }
+  } catch {
+    // fall through to the system font
+  }
+  textTypeface = Skia.FontMgr.System().matchFamilyStyle('sans-serif', FontStyle.Bold);
+  return textTypeface;
+}
+
+/**
+ * Renders text (a name, @handle, ©…) as a transparent PNG so it can live in
+ * the logo library and ride the normal stamping pipeline.
+ */
+export async function renderTextLogo(text: string, color: string): Promise<SkImage> {
+  const typeface = await loadTextTypeface();
+  if (!typeface) throw new Error('Could not load a font for the text.');
+
+  // rendered large so it stays crisp on full-resolution photos
+  const fontSize = 200;
+  const font = Skia.Font(typeface, fontSize);
+  let textWidth: number;
+  try {
+    textWidth = font.measureText(text).width;
+  } catch {
+    textWidth = text.length * fontSize * 0.6;
+  }
+  const pad = 40;
+  const w = Math.max(1, Math.ceil(textWidth + pad * 2));
+  const h = Math.ceil(fontSize * 1.7);
+
+  const surface = makeSurface(w, h);
+  const canvas = surface.getCanvas();
+  const paint = Skia.Paint();
+  paint.setColor(Skia.Color(color));
+  paint.setAntiAlias(true);
+  canvas.drawText(text, pad, fontSize * 1.2, paint, font);
+  surface.flush();
+
+  return downscale(trimTransparent(surface.makeImageSnapshot(), 10));
 }
 
 export function encodePng(image: SkImage): Uint8Array {

@@ -3,20 +3,25 @@ import { Image as ExpoImage } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useToast } from '@/components/toast';
 import { useTheme } from '@/hooks/use-theme';
 import { listLogos } from '@/lib/logo-store';
+import { encodePhotos } from '@/lib/photo-params';
+import { listStamped } from '@/lib/stamped-store';
+import type { StampedPhoto } from '@/lib/types';
 
 export default function HomeScreen() {
   const theme = useTheme();
   const toast = useToast();
   const [logoCount, setLogoCount] = useState(0);
+  const [recent, setRecent] = useState<StampedPhoto[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       listLogos().then((l) => setLogoCount(l.length));
+      listStamped().then((s) => setRecent(s.slice(0, 8)));
     }, []),
   );
 
@@ -29,16 +34,14 @@ export default function HomeScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 20,
+      orderedSelection: true,
     });
     if (result.canceled) return;
-    const a = result.assets[0];
     router.push({
       pathname: '/pick-logo',
-      params: {
-        photoUri: a.uri,
-        photoWidth: String(a.width),
-        photoHeight: String(a.height),
-      },
+      params: { photos: encodePhotos(result.assets) },
     });
   };
 
@@ -70,7 +73,7 @@ export default function HomeScreen() {
           </Text>
           <Text style={[styles.cardBody, { color: theme.textMuted }]}>
             {logoCount > 0
-              ? 'Pick a photo and overlay your logo'
+              ? 'Pick one or more photos and overlay your logo'
               : 'Create a logo first'}
           </Text>
         </View>
@@ -98,6 +101,62 @@ export default function HomeScreen() {
         </View>
         <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
       </Pressable>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.card,
+          { backgroundColor: theme.surface },
+          pressed && styles.pressed,
+        ]}
+        onPress={() => router.push('/create-text')}
+      >
+        <View style={[styles.iconWrap, { backgroundColor: theme.accentSoft }]}>
+          <Ionicons name="text-outline" size={28} color={theme.accent} />
+        </View>
+        <View style={styles.cardText}>
+          <Text style={[styles.cardTitle, { color: theme.text }]}>
+            Text watermark
+          </Text>
+          <Text style={[styles.cardBody, { color: theme.textMuted }]}>
+            Your name or @handle as a stamp
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+      </Pressable>
+
+      {recent.length > 0 && (
+        <View style={styles.recentSection}>
+          <View style={styles.recentHeader}>
+            <Text style={[styles.recentTitle, { color: theme.text }]}>Recent</Text>
+            <Pressable
+              onPress={() => router.push('/stamped')}
+              hitSlop={8}
+              style={styles.recentLink}
+            >
+              <Text style={[styles.recentLinkLabel, { color: theme.accent }]}>
+                Gallery
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={theme.accent} />
+            </Pressable>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recentStrip}
+          >
+            {recent.map((p) => (
+              <Pressable
+                key={p.id}
+                onPress={() =>
+                  router.push({ pathname: '/stamped/[id]', params: { id: p.id } })
+                }
+              >
+                <ExpoImage source={{ uri: p.uri }} style={styles.recentThumb} />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -148,4 +207,15 @@ const styles = StyleSheet.create({
     marginTop: 3,
     lineHeight: 18,
   },
+  recentSection: { marginTop: 'auto', gap: 8, paddingTop: 8 },
+  recentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  recentTitle: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
+  recentLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  recentLinkLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
+  recentStrip: { gap: 8 },
+  recentThumb: { width: 74, height: 74, borderRadius: 10 },
 });

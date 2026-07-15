@@ -43,10 +43,20 @@ export default function DrawerLayout() {
       <Drawer.Screen
         name="stamped"
         options={{
-          title: 'Logo Photos',
-          drawerLabel: 'Logo Photos',
+          title: 'Gallery',
+          drawerLabel: 'Gallery',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="images-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          drawerLabel: 'Settings',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
           ),
         }}
       />

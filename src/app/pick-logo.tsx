@@ -15,17 +15,21 @@ import { Button } from '@/components/button';
 import { useTheme } from '@/hooks/use-theme';
 import { makeCheckerTile } from '@/lib/image-processing';
 import { listLogos } from '@/lib/logo-store';
+import { decodePhotos } from '@/lib/photo-params';
 import type { Logo } from '@/lib/types';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function PickLogoScreen() {
   const theme = useTheme();
   const params = useLocalSearchParams<{
-    photoUri: string;
-    photoWidth: string;
-    photoHeight: string;
+    photos?: string;
+    photoUri?: string;
+    photoWidth?: string;
+    photoHeight?: string;
     stampedId?: string;
+    stampedIds?: string;
   }>();
+  const photoCount = decodePhotos(params).length;
   const insets = useSafeAreaInsets();
   const [logos, setLogos] = useState<Logo[]>([]);
   const checker = useMemo(
@@ -44,10 +48,12 @@ export default function PickLogoScreen() {
       pathname: '/editor',
       params: {
         logoId: logo.id,
+        photos: params.photos,
         photoUri: params.photoUri,
         photoWidth: params.photoWidth,
         photoHeight: params.photoHeight,
         stampedId: params.stampedId,
+        stampedIds: params.stampedIds,
       },
     });
   };
@@ -55,7 +61,9 @@ export default function PickLogoScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.intro, { color: theme.textMuted }]}>
-        Choose a logo for this photo
+        {photoCount > 1
+          ? `Choose a mark for these ${photoCount} photos`
+          : 'Choose a mark for this photo'}
       </Text>
       <FlatList
         data={logos}

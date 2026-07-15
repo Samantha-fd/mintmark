@@ -21,4 +21,6 @@ export type StampedPhoto = {
   width: number;
   height: number;
   createdAt: number;
+  /** set while the photo sits in "Recently deleted"; absent when active */
+  deletedAt?: number;
 };

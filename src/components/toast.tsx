@@ -7,18 +7,19 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/hooks/use-theme';
 
-type ToastType = 'success' | 'error';
-type ToastState = { id: number; message: string; type: ToastType };
+type ToastType = 'success' | 'error' | 'info';
+type ToastAction = { label: string; onPress: () => void };
+type ToastState = { id: number; message: string; type: ToastType; action?: ToastAction };
 
-const ToastContext = createContext<(message: string, type?: ToastType) => void>(
-  () => {},
-);
+const ToastContext = createContext<
+  (message: string, type?: ToastType, action?: ToastAction) => void
+>(() => {});
 
 /** `const toast = useToast(); toast('Saved!');` */
 export function useToast() {
@@ -31,11 +32,15 @@ export function ToastProvider({ children }: PropsWithChildren) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const show = useCallback((message: string, type: ToastType = 'success') => {
-    setToast({ id: Date.now(), message, type });
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(null), 3000);
-  }, []);
+  const show = useCallback(
+    (message: string, type: ToastType = 'success', action?: ToastAction) => {
+      setToast({ id: Date.now(), message, type, action });
+      if (timer.current) clearTimeout(timer.current);
+      // leave time to actually press the action button
+      timer.current = setTimeout(() => setToast(null), action ? 6000 : 3000);
+    },
+    [],
+  );
 
   const accentColor = toast?.type === 'error' ? theme.danger : theme.accent;
 
@@ -47,7 +52,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
           key={toast.id}
           entering={FadeIn.duration(250)}
           exiting={FadeOut.duration(250)}
-          pointerEvents="none"
+          pointerEvents={toast.action ? 'box-none' : 'none'}
           style={[
             styles.toast,
             {
@@ -58,13 +63,37 @@ export function ToastProvider({ children }: PropsWithChildren) {
           ]}
         >
           <Ionicons
-            name={toast.type === 'error' ? 'alert-circle' : 'checkmark-circle'}
+            name={
+              toast.type === 'error'
+                ? 'alert-circle'
+                : toast.type === 'info'
+                  ? 'information-circle'
+                  : 'checkmark-circle'
+            }
             size={18}
             color={accentColor}
           />
           <Text style={[styles.message, { color: theme.text }]} numberOfLines={2}>
             {toast.message}
           </Text>
+          {toast.action && (
+            <Pressable
+              onPress={() => {
+                if (timer.current) clearTimeout(timer.current);
+                setToast(null);
+                toast.action?.onPress();
+              }}
+              style={({ pressed }) => [
+                styles.action,
+                { backgroundColor: theme.accentSoft },
+                pressed && { opacity: 0.65 },
+              ]}
+            >
+              <Text style={[styles.actionLabel, { color: theme.accent }]}>
+                {toast.action.label}
+              </Text>
+            </Pressable>
+          )}
         </Animated.View>
       )}
     </ToastContext.Provider>
@@ -91,4 +120,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
   },
   message: { fontFamily: 'Inter_500Medium', fontSize: 13, flexShrink: 1 },
+  action: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+  },
+  actionLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 13 },
 });

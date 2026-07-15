@@ -1,22 +1,16 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useState } from 'react';
-import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/button';
+import { ActionBar, type ActionBarItem } from '@/components/action-bar';
 import { useToast } from '@/components/toast';
 import { useTheme } from '@/hooks/use-theme';
 import { encodePhotoAsJpeg } from '@/lib/image-processing';
 import { ALBUM_NAME, saveToGalleryAlbum } from '@/lib/media';
-import { deleteStamped, getStamped, updateStamped } from '@/lib/stamped-store';
+import { getSettings } from '@/lib/settings';
+import { getStamped, removeStamped, updateStampedWithUndo } from '@/lib/stamped-store';
 import type { StampedPhoto } from '@/lib/types';
 
 export default function StampedDetailScreen() {
@@ -26,7 +20,7 @@ export default function StampedDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [photo, setPhoto] = useState<StampedPhoto | null>(null);
   const [busy, setBusy] = useState(false);
-  const [removing, setRemoving] = useState(false);
+  const [lastUndo, setLastUndo] = useState<(() => Promise<void>) | null>(null);
 
   // reload on focus so edits made in the editor show immediately
   useFocusEffect(
@@ -54,7 +48,7 @@ export default function StampedDetailScreen() {
     setBusy(true);
     try {
       await saveToGalleryAlbum(photo.uri);
-      toast(`Saved to the “${ALBUM_NAME}” album in your gallery`);
+      toast(`Saved to the “${ALBUM_NAME}” album in your phone gallery`);
     } catch (e) {
       toast(String(e instanceof Error ? e.message : e), 'error');
     } finally {
@@ -78,46 +72,60 @@ export default function StampedDetailScreen() {
 
   const removeLogo = async () => {
     if (!photo || !photo.photoUri) return;
-    setRemoving(true);
+    setBusy(true);
     try {
       const bytes = await encodePhotoAsJpeg(photo.photoUri);
-      const updated = await updateStamped(photo.id, bytes, {
+      const { photo: updated, undo } = await updateStampedWithUndo(photo.id, bytes, {
         width: photo.width,
         height: photo.height,
       });
       setPhoto({ ...updated });
-      toast('Logos removed — back to the original photo');
-      // gallery copy is a bonus; the dedicated button covers failures
-      try {
-        await saveToGalleryAlbum(updated.uri);
-      } catch {
-        // e.g. Expo Go can't write to the gallery — already explained elsewhere
+      const undoAndRefresh = async () => {
+        await undo();
+        setLastUndo(null);
+        const restored = await getStamped(photo.id);
+        if (restored) setPhoto({ ...restored });
+      };
+      setLastUndo(() => undoAndRefresh);
+      toast('Watermarks removed — back to the original photo', 'success', {
+        label: 'Undo',
+        onPress: undoAndRefresh,
+      });
+      if ((await getSettings()).phoneGalleryBackup) {
+        // gallery copy is a bonus; the Save action covers failures
+        try {
+          await saveToGalleryAlbum(updated.uri);
+        } catch {
+          // e.g. Expo Go can't write to the gallery — already explained elsewhere
+        }
       }
     } catch (e) {
       toast(String(e instanceof Error ? e.message : e), 'error');
     } finally {
-      setRemoving(false);
+      setBusy(false);
     }
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!photo) return;
-    Alert.alert(
-      'Delete logo photo?',
-      'It will be removed from the app. Copies already saved to your gallery stay there.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteStamped(photo.id);
-            toast('Logo photo deleted');
-            router.back();
-          },
-        },
-      ],
-    );
+    const undo = await removeStamped([photo.id]);
+    toast('Moved to Recently deleted', 'success', {
+      label: 'Undo',
+      onPress: () => {
+        undo();
+      },
+    });
+    router.back();
+  };
+
+  const more = () => {
+    Alert.alert('More', undefined, [
+      ...(lastUndo
+        ? [{ text: 'Undo last change', onPress: () => lastUndo() }]
+        : []),
+      { text: 'Remove watermark', onPress: removeLogo },
+      { text: 'Cancel', style: 'cancel' as const },
+    ]);
   };
 
   if (!photo) {
@@ -128,70 +136,43 @@ export default function StampedDetailScreen() {
     );
   }
 
+  const actions: ActionBarItem[] = [
+    { icon: 'share-outline', label: 'Share', tone: 'accent', onPress: share, disabled: busy },
+    { icon: 'download-outline', label: 'Save', onPress: saveToGallery, disabled: busy },
+    { icon: 'add-circle-outline', label: 'Add watermark', onPress: addAnotherLogo, disabled: busy },
+    { icon: 'trash-outline', label: 'Delete', onPress: confirmDelete, disabled: busy },
+    ...(photo.photoUri
+      ? [{ icon: 'ellipsis-horizontal', label: 'More', onPress: more, disabled: busy } as ActionBarItem]
+      : []),
+  ];
+
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: theme.background, paddingBottom: 16 + insets.bottom },
+        { backgroundColor: theme.background, paddingBottom: 12 + insets.bottom },
       ]}
     >
-      <View style={[styles.previewWrap, { borderColor: theme.border }]}>
+      <Text style={[styles.meta, { color: theme.textMuted }]}>
+        {new Date(photo.createdAt).toLocaleDateString()} · {photo.width} ×{' '}
+        {photo.height} px
+      </Text>
+      <View style={styles.previewWrap}>
         <Image source={{ uri: photo.uri }} style={styles.preview} resizeMode="contain" />
       </View>
-      <Text style={[styles.meta, { color: theme.textMuted }]}>
-        {photo.width} × {photo.height} px ·{' '}
-        {new Date(photo.createdAt).toLocaleString()}
-      </Text>
-
-      <View style={styles.actions}>
-        <Button label="Share" icon="share-outline" onPress={share} />
-        <Button
-          label="Save to gallery"
-          icon="download-outline"
-          variant="secondary"
-          onPress={saveToGallery}
-          busy={busy}
-        />
-        {photo.photoUri && (
-          <Button
-            label="Remove logo"
-            icon="close-circle-outline"
-            variant="secondary"
-            onPress={removeLogo}
-            busy={removing}
-          />
-        )}
-        <Button
-          label="Add another logo"
-          icon="add-circle-outline"
-          variant="secondary"
-          onPress={addAnotherLogo}
-        />
-        <Button
-          label="Delete"
-          icon="trash-outline"
-          variant="secondary"
-          onPress={confirmDelete}
-        />
-      </View>
+      <ActionBar items={actions} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { flex: 1, padding: 16, gap: 10 },
+  container: { flex: 1, padding: 12, gap: 10 },
+  meta: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center' },
   previewWrap: {
     flex: 1,
     borderRadius: 16,
     overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
   },
   preview: { width: '100%', height: '100%' },
-  meta: { fontFamily: 'Inter_400Regular', fontSize: 12, textAlign: 'center' },
-  actions: { gap: 8 },
 });
