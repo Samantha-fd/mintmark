@@ -11,6 +11,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import { OnboardingGate } from '@/components/onboarding';
 import { PermissionGate } from '@/components/permission-gate';
 import { ToastProvider } from '@/components/toast';
 import { useTheme } from '@/hooks/use-theme';
@@ -46,6 +47,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ToastProvider>
+        <OnboardingGate>
         <PermissionGate>
           <Stack
           screenOptions={{
@@ -58,12 +60,19 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
           <Stack.Screen name="create" options={{ title: 'New Logo' }} />
-          <Stack.Screen name="pick-logo" options={{ title: 'Choose a Logo' }} />
+          <Stack.Screen name="create-text" options={{ title: 'Text Watermark' }} />
+          <Stack.Screen name="pick-logo" options={{ title: 'Choose a Mark' }} />
           <Stack.Screen name="editor" options={{ title: 'Add logo to photo' }} />
           <Stack.Screen name="logo/[id]" options={{ title: 'Logo' }} />
           <Stack.Screen name="stamped/[id]" options={{ title: 'Logo Photo' }} />
+          <Stack.Screen
+            name="recently-deleted"
+            options={{ title: 'Recently deleted' }}
+          />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
           </Stack>
         </PermissionGate>
+        </OnboardingGate>
         <StatusBar style="auto" />
       </ToastProvider>
     </GestureHandlerRootView>
