@@ -39,7 +39,7 @@ export function Onboarding({ onDone }: { onDone: (target: OnboardingTarget) => v
     try {
       // only photos — the default also asks for audio, which is not declared
       // in the manifest and gets rejected
-      await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+      await MediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
     } catch {
       // Expo Go on Android has no media library — the gate stays lenient there
     }

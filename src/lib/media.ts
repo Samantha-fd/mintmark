@@ -8,11 +8,11 @@ export const ALBUM_NAME = 'Markly';
  * Throws if the user refuses photo permission.
  */
 export async function saveToGalleryAlbum(fileUri: string): Promise<void> {
-  // photos only — requesting the default set also asks for audio, which is
-  // not declared in the manifest and gets rejected
+  // photos + videos — requesting the default set also asks for audio, which
+  // is not declared in the manifest and gets rejected
   let perm: MediaLibrary.EXPermissionResponse;
   try {
-    perm = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+    perm = await MediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
   } catch {
     // media library is entirely unavailable in Expo Go on Android
     throw new Error(
