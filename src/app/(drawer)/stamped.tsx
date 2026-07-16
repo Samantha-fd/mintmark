@@ -58,8 +58,8 @@ export default function StampedLibraryScreen() {
       // the system sheet takes one file at a time — share them in sequence
       for (const p of selectedPhotos()) {
         await Sharing.shareAsync(p.uri, {
-          mimeType: 'image/jpeg',
-          dialogTitle: 'Share your logo photo',
+          mimeType: p.mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+          dialogTitle: 'Share your marked photo',
         });
       }
       setSelected(new Set());
@@ -71,7 +71,15 @@ export default function StampedLibraryScreen() {
   };
 
   const editSelected = () => {
-    const chosen = selectedPhotos();
+    const all = selectedPhotos();
+    const chosen = all.filter((p) => p.mediaType !== 'video');
+    if (chosen.length === 0) {
+      toast('Videos can’t take another mark — pick photos to re-stamp', 'info');
+      return;
+    }
+    if (chosen.length < all.length) {
+      toast('Skipping videos — they can’t take another mark', 'info');
+    }
     router.push({
       pathname: '/pick-logo',
       params: {
@@ -158,12 +166,17 @@ export default function StampedLibraryScreen() {
               onLongPress={() => toggle(item.id)}
             >
               <Image
-                source={{ uri: item.uri }}
+                source={{ uri: item.thumbUri ?? item.uri }}
                 style={[
                   StyleSheet.absoluteFill as object,
                   isSelected && { opacity: 0.65 },
                 ]}
               />
+              {item.mediaType === 'video' && (
+                <View style={styles.playBadge}>
+                  <Ionicons name="play" size={14} color="#FFFFFF" />
+                </View>
+              )}
               {isSelected && (
                 <>
                   <View
@@ -239,6 +252,18 @@ const styles = StyleSheet.create({
     right: 6,
     borderRadius: 11,
     backgroundColor: '#FFFFFFCC',
+  },
+  playBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#000000A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 2,
   },
   actionBar: {
     position: 'absolute',

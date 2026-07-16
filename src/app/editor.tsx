@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -32,6 +33,7 @@ import { markSeen, timesSeen } from '@/lib/hints';
 import {
   analyzePhoto,
   encodePhotoAsJpeg,
+  renderMarkOverlayPng,
   renderStampedPhoto,
   type PlacementAnalysis,
 } from '@/lib/image-processing';
@@ -40,8 +42,9 @@ import { saveToGalleryAlbum } from '@/lib/media';
 import { decodePhotos, type PickedPhoto } from '@/lib/photo-params';
 import { getPlacement, savePlacement, type SavedPlacement } from '@/lib/placement-store';
 import { getSettings } from '@/lib/settings';
-import { saveStamped, updateStamped } from '@/lib/stamped-store';
+import { saveStamped, saveStampedVideo, updateStamped } from '@/lib/stamped-store';
 import type { Logo } from '@/lib/types';
+import { stampVideo } from '@/lib/video-processing';
 
 type Rect = { x: number; y: number; w: number; h: number };
 
@@ -76,7 +79,11 @@ export default function EditorScreen() {
     stampedId?: string;
     /** JSON array aligned with `photos` — update these instead of creating new */
     stampedIds?: string;
+    /** video mode: the editor stages the first frame, ffmpeg does the export */
+    videoUri?: string;
+    videoDurationMs?: string;
   }>();
+  const isVideo = !!params.videoUri;
   const [logo, setLogo] = useState<Logo | null>(null);
   const [photos, setPhotos] = useState<PickedPhoto[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -122,6 +129,16 @@ export default function EditorScreen() {
   }, [params.logoId]);
 
   useEffect(() => {
+    // video mode: the deck is the video's first frame at native resolution
+    if (params.videoUri) {
+      VideoThumbnails.getThumbnailAsync(params.videoUri, { time: 0 })
+        .then(({ uri, width, height }) => setPhotos([{ uri, width, height }]))
+        .catch(() => {
+          toast('Could not read that video', 'error');
+          router.back();
+        });
+      return;
+    }
     // photos handed over by the previous screen (home / pick-logo / detail)
     const fromParams = decodePhotos(params);
     if (fromParams.length) {
@@ -448,11 +465,55 @@ export default function EditorScreen() {
     rememberedRef.current = p;
   };
 
+  const cancelVideoRef = useRef<(() => void) | null>(null);
+
   const save = async () => {
     if (!photos?.length || !rect || !container) return;
     setExporting(true);
     try {
       placementsRef.current[index] = snapshotPlacement(rect);
+
+      if (isVideo && params.videoUri && logo) {
+        const frame = photos[0];
+        const p = placementsRef.current[0] ?? defaultPlacement();
+        const overlay = await renderMarkOverlayPng(
+          logo.uri,
+          p,
+          frame.width,
+          frame.height,
+        );
+        setProgress('Stamping video…');
+        const handle = stampVideo({
+          videoUri: params.videoUri,
+          overlayPngBytes: overlay,
+          width: frame.width,
+          height: frame.height,
+          durationMs: Number(params.videoDurationMs) || 0,
+          onProgress: (f) => setProgress(`Stamping video… ${Math.round(f * 100)}%`),
+        });
+        cancelVideoRef.current = handle.cancel;
+        const outUri = await handle.promise;
+        cancelVideoRef.current = null;
+        const thumb = await VideoThumbnails.getThumbnailAsync(outUri, { time: 0 }).catch(
+          () => null,
+        );
+        const stamped = await saveStampedVideo(outUri, {
+          width: frame.width,
+          height: frame.height,
+          thumbUri: thumb?.uri,
+        });
+        rememberPlacement(p);
+        if ((await getSettings()).phoneGalleryBackup) {
+          try {
+            await saveToGalleryAlbum(stamped.uri);
+          } catch (e) {
+            toast(String(e instanceof Error ? e.message : e), 'error');
+          }
+        }
+        toast('Video saved to your Gallery');
+        router.replace({ pathname: '/stamped/[id]', params: { id: stamped.id } });
+        return;
+      }
 
       const backup = (await getSettings()).phoneGalleryBackup;
       const savedIds: string[] = [];
@@ -509,8 +570,11 @@ export default function EditorScreen() {
         router.replace({ pathname: '/stamped/[id]', params: { id: savedIds[0] } });
       }
     } catch (e) {
-      toast(String(e instanceof Error ? e.message : e), 'error');
+      const msg = String(e instanceof Error ? e.message : e);
+      if (msg === 'cancelled') toast('Video stamping cancelled', 'info');
+      else toast(msg, 'error');
     } finally {
+      cancelVideoRef.current = null;
       setExporting(false);
       setProgress(null);
     }
@@ -678,18 +742,25 @@ export default function EditorScreen() {
           />
           <Button
             label={
-              updating
-                ? count > 1
-                  ? `Update ${count} photos`
-                  : 'Update'
-                : count > 1
-                  ? `Save ${count} photos`
-                  : 'Save'
+              isVideo
+                ? 'Save video'
+                : updating
+                  ? count > 1
+                    ? `Update ${count} photos`
+                    : 'Update'
+                  : count > 1
+                    ? `Save ${count} photos`
+                    : 'Save'
             }
             icon="checkmark"
             onPress={save}
             busy={exporting}
           />
+          {isVideo && exporting && (
+            <Pressable onPress={() => cancelVideoRef.current?.()} hitSlop={8}>
+              <Text style={[styles.cancelLabel, { color: theme.danger }]}>Cancel</Text>
+            </Pressable>
+          )}
         </View>
       </View>
     </View>
@@ -820,4 +891,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   chipLabel: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
+  cancelLabel: {
+    fontFamily: 'Inter_600SemiBold',
+    fontSize: 13,
+    textAlign: 'center',
+    paddingVertical: 6,
+  },
 });

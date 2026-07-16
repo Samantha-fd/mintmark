@@ -28,8 +28,13 @@ export default function PickLogoScreen() {
     photoHeight?: string;
     stampedId?: string;
     stampedIds?: string;
+    videoUri?: string;
+    videoWidth?: string;
+    videoHeight?: string;
+    videoDurationMs?: string;
   }>();
   const photoCount = decodePhotos(params).length;
+  const isVideo = !!params.videoUri;
   const insets = useSafeAreaInsets();
   const [logos, setLogos] = useState<Logo[]>([]);
   const checker = useMemo(
@@ -54,6 +59,8 @@ export default function PickLogoScreen() {
         photoHeight: params.photoHeight,
         stampedId: params.stampedId,
         stampedIds: params.stampedIds,
+        videoUri: params.videoUri,
+        videoDurationMs: params.videoDurationMs,
       },
     });
   };
@@ -61,9 +68,11 @@ export default function PickLogoScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.intro, { color: theme.textMuted }]}>
-        {photoCount > 1
-          ? `Choose a mark for these ${photoCount} photos`
-          : 'Choose a mark for this photo'}
+        {isVideo
+          ? 'Choose a mark for this video'
+          : photoCount > 1
+            ? `Choose a mark for these ${photoCount} photos`
+            : 'Choose a mark for this photo'}
       </Text>
       <FlatList
         data={logos}

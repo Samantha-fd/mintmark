@@ -32,13 +32,29 @@ export default function HomeScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ['images', 'videos'],
       quality: 1,
       allowsMultipleSelection: true,
       selectionLimit: 20,
       orderedSelection: true,
     });
     if (result.canceled) return;
+    const video = result.assets.find((a) => a.type === 'video');
+    if (video) {
+      if (result.assets.length > 1) {
+        toast('Videos are stamped one at a time — using the first video', 'info');
+      }
+      router.push({
+        pathname: '/pick-logo',
+        params: {
+          videoUri: video.uri,
+          videoWidth: String(video.width),
+          videoHeight: String(video.height),
+          videoDurationMs: String(Math.round(video.duration ?? 0)),
+        },
+      });
+      return;
+    }
     router.push({
       pathname: '/pick-logo',
       params: { photos: encodePhotos(result.assets) },
@@ -151,7 +167,7 @@ export default function HomeScreen() {
                   router.push({ pathname: '/stamped/[id]', params: { id: p.id } })
                 }
               >
-                <ExpoImage source={{ uri: p.uri }} style={styles.recentThumb} />
+                <ExpoImage source={{ uri: p.thumbUri ?? p.uri }} style={styles.recentThumb} />
               </Pressable>
             ))}
           </ScrollView>

@@ -106,7 +106,7 @@ export default function RecentlyDeletedScreen() {
           return (
             <Pressable style={styles.cell} onPress={() => toggle(item.id)}>
               <Image
-                source={{ uri: item.uri }}
+                source={{ uri: item.thumbUri ?? item.uri }}
                 style={[
                   StyleSheet.absoluteFill as object,
                   isSelected && { opacity: 0.65 },

@@ -1,5 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,14 +30,16 @@ export default function StampedDetailScreen() {
     }, [id]),
   );
 
+  const isVideo = photo?.mediaType === 'video';
+
   const share = async () => {
     if (!photo) return;
     if (await Sharing.isAvailableAsync()) {
       // dialogTitle forces Android's full share chooser instead of jumping
       // straight to the most-recently-used app
       await Sharing.shareAsync(photo.uri, {
-        mimeType: 'image/jpeg',
-        dialogTitle: 'Share your logo photo',
+        mimeType: isVideo ? 'video/mp4' : 'image/jpeg',
+        dialogTitle: 'Share your marked photo',
       });
     } else {
       toast('Sharing is not available on this device', 'error');
@@ -139,9 +142,18 @@ export default function StampedDetailScreen() {
   const actions: ActionBarItem[] = [
     { icon: 'share-outline', label: 'Share', tone: 'accent', onPress: share, disabled: busy },
     { icon: 'download-outline', label: 'Save', onPress: saveToGallery, disabled: busy },
-    { icon: 'add-circle-outline', label: 'Add watermark', onPress: addAnotherLogo, disabled: busy },
+    ...(!isVideo
+      ? [
+          {
+            icon: 'add-circle-outline',
+            label: 'Add watermark',
+            onPress: addAnotherLogo,
+            disabled: busy,
+          } as ActionBarItem,
+        ]
+      : []),
     { icon: 'trash-outline', label: 'Delete', onPress: confirmDelete, disabled: busy },
-    ...(photo.photoUri
+    ...(!isVideo && photo.photoUri
       ? [{ icon: 'ellipsis-horizontal', label: 'More', onPress: more, disabled: busy } as ActionBarItem]
       : []),
   ];
@@ -158,10 +170,24 @@ export default function StampedDetailScreen() {
         {photo.height} px
       </Text>
       <View style={styles.previewWrap}>
-        <Image source={{ uri: photo.uri }} style={styles.preview} resizeMode="contain" />
+        {isVideo ? (
+          <VideoPreview uri={photo.uri} />
+        ) : (
+          <Image source={{ uri: photo.uri }} style={styles.preview} resizeMode="contain" />
+        )}
       </View>
       <ActionBar items={actions} />
     </View>
+  );
+}
+
+function VideoPreview({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, (p) => {
+    p.loop = true;
+    p.play();
+  });
+  return (
+    <VideoView player={player} style={styles.preview} contentFit="contain" nativeControls />
   );
 }
 
