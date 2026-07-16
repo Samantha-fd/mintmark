@@ -458,6 +458,43 @@ export async function renderStampedPhoto(
   return bytes;
 }
 
+/**
+ * Renders the placed mark alone onto a transparent canvas at the target
+ * media's full resolution. For video stamping: ffmpeg overlays this single
+ * PNG on every frame, so all placement math stays in Skia.
+ */
+export async function renderMarkOverlayPng(
+  logoUri: string,
+  p: { cx: number; cy: number; widthFrac: number; rotation: number; opacity: number },
+  width: number,
+  height: number,
+): Promise<Uint8Array> {
+  const logo = await loadImage(logoUri);
+  const aspect = logo.height() / logo.width();
+  const minSide = Math.min(width, height);
+  const logoW = Math.min(p.widthFrac, 0.9 / Math.max(1, aspect)) * minSide;
+  const logoH = logoW * aspect;
+
+  const surface = makeSurface(width, height);
+  const canvas = surface.getCanvas();
+  const paint = Skia.Paint();
+  paint.setAlphaf(Math.max(0, Math.min(1, p.opacity)));
+  canvas.save();
+  canvas.translate(p.cx * width, p.cy * height);
+  canvas.rotate((p.rotation * 180) / Math.PI, 0, 0);
+  canvas.drawImageRectCubic(
+    logo,
+    Skia.XYWHRect(0, 0, logo.width(), logo.height()),
+    Skia.XYWHRect(-logoW / 2, -logoH / 2, logoW, logoH),
+    1 / 3,
+    1 / 3,
+    paint,
+  );
+  canvas.restore();
+  surface.flush();
+  return encodePng(surface.makeImageSnapshot());
+}
+
 /** Small checkerboard tile (as data URI) used behind transparent previews. */
 export function makeCheckerTile(light: string, dark: string): string {
   const size = 24;

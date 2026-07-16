@@ -46,6 +46,7 @@ function deleteFile(uri: string | undefined) {
 function deleteFilesOf(photo: StampedPhoto) {
   deleteFile(photo.uri);
   deleteFile(photo.photoUri);
+  deleteFile(photo.thumbUri);
 }
 
 /**
@@ -117,6 +118,44 @@ export async function saveStamped(
   all.unshift(photo);
   await persist(all);
   return photo;
+}
+
+/**
+ * Moves a stamped mp4 (and its watermarked poster frame) from the cache into
+ * the library.
+ */
+export async function saveStampedVideo(
+  videoCacheUri: string,
+  meta: { width: number; height: number; thumbUri?: string },
+): Promise<StampedPhoto> {
+  const id = `${Date.now()}-${Math.round(Math.random() * 1e6)}`;
+  const file = new File(stampedDir(), `${id}.mp4`);
+  new File(videoCacheUri).move(file);
+
+  let storedThumb: string | undefined;
+  if (meta.thumbUri) {
+    try {
+      const thumb = new File(stampedDir(), `${id}-thumb.jpg`);
+      new File(meta.thumbUri).move(thumb);
+      storedThumb = thumb.uri;
+    } catch {
+      // grid falls back to a placeholder without a thumb
+    }
+  }
+
+  const video: StampedPhoto = {
+    id,
+    uri: file.uri,
+    createdAt: Date.now(),
+    width: meta.width,
+    height: meta.height,
+    mediaType: 'video',
+    thumbUri: storedThumb,
+  };
+  const all = await readAll();
+  all.unshift(video);
+  await persist(all);
+  return video;
 }
 
 /**

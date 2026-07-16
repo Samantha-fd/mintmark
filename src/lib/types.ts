@@ -23,4 +23,8 @@ export type StampedPhoto = {
   createdAt: number;
   /** set while the photo sits in "Recently deleted"; absent when active */
   deletedAt?: number;
+  /** absent means photo (all entries created before video support) */
+  mediaType?: 'photo' | 'video';
+  /** watermarked poster frame for videos (grids can't render an mp4) */
+  thumbUri?: string;
 };
