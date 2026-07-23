@@ -553,8 +553,8 @@ export default function EditorScreen() {
         markSeen('gallery-home');
         toast(
           backup
-            ? 'Saved. Photos live in Markly’s Gallery — a backup also goes to your phone gallery (see Settings)'
-            : 'Saved. Photos live in Markly’s Gallery',
+            ? 'Saved. Photos live in Mintmark’s Gallery — a backup also goes to your phone gallery (see Settings)'
+            : 'Saved. Photos live in Mintmark’s Gallery',
           'info',
         );
       } else {

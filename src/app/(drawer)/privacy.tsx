@@ -26,15 +26,15 @@ export default function PrivacyPolicyScreen() {
       </Text>
 
       <Section title="The short version">
-        Markly does not collect, store, or share any of your personal data.
+        Mintmark does not collect, store, or share any of your personal data.
         Everything the app does happens entirely on your phone.
       </Section>
 
       <Section title="Your photos and logos">
-        Markly asks for photo access so you can pick pictures to turn into
+        Mintmark asks for photo access so you can pick pictures to turn into
         logos and to stamp your logos onto photos. Logos and stamped photos
         you save are stored only on your device, inside the app and in your
-        gallery. They are never uploaded anywhere — Markly has no servers and
+        gallery. They are never uploaded anywhere — Mintmark has no servers and
         makes no internet connections with your images.
       </Section>
 
@@ -45,19 +45,19 @@ export default function PrivacyPolicyScreen() {
       </Section>
 
       <Section title="Accounts and tracking">
-        Markly has no user accounts, no sign-in, no advertising, and no
+        Mintmark has no user accounts, no sign-in, no advertising, and no
         analytics or tracking of any kind.
       </Section>
 
       <Section title="Deleting your data">
-        All of Markly’s data lives on your device. Deleting a logo or stamped
+        All of Mintmark’s data lives on your device. Deleting a logo or stamped
         photo inside the app removes it permanently, and uninstalling the app
         removes everything the app stored. Photos you saved to your gallery
         remain in your gallery until you delete them there.
       </Section>
 
       <Section title="Children">
-        Markly does not knowingly collect any information from anyone,
+        Mintmark does not knowingly collect any information from anyone,
         including children — because it collects no information at all.
       </Section>
 

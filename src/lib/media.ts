@@ -1,10 +1,10 @@
 import * as MediaLibrary from 'expo-media-library';
 
 /** Gallery album that all stamped photos are collected into. */
-export const ALBUM_NAME = 'Markly';
+export const ALBUM_NAME = 'Mintmark';
 
 /**
- * Saves the file into the device gallery, inside the "Markly" album.
+ * Saves the file into the device gallery, inside the "Mintmark" album.
  * Throws if the user refuses photo permission.
  */
 export async function saveToGalleryAlbum(fileUri: string): Promise<void> {

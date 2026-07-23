@@ -38,7 +38,7 @@ export default function SettingsScreen() {
               Back up to phone gallery
             </Text>
             <Text style={[styles.sublabel, { color: theme.textMuted }]}>
-              Every stamped photo also gets saved to the “Markly” album in your
+              Every stamped photo also gets saved to the “Mintmark” album in your
               phone gallery.
             </Text>
           </View>
@@ -51,12 +51,12 @@ export default function SettingsScreen() {
           />
         </View>
         <Text style={[styles.note, { color: theme.textMuted }]}>
-          Your photos always live in Markly’s Gallery either way. Turning the
+          Your photos always live in Mintmark’s Gallery either way. Turning the
           backup off keeps just one copy and saves storage space.
         </Text>
         {!backup && (
           <Text style={[styles.warning, { color: theme.danger }]}>
-            Heads up: with backup off, photos exist only inside Markly — if you
+            Heads up: with backup off, photos exist only inside Mintmark — if you
             ever uninstall the app, they’re gone with it.
           </Text>
         )}

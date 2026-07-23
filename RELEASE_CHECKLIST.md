@@ -1,15 +1,15 @@
-# Markly — Play Store release checklist
+# Mintmark — Play Store release checklist
 
 ## 1. Before anything else
 
 - [ ] **Back up signing keystore** — copy `credentials/` + `credentials.json` to Google Drive / password manager (losing them jeopardizes updates)
 - [ ] **Check Play account testing requirement** — personal accounts created after 13 Nov 2023 must run a closed test with **12+ testers opted in for 14 consecutive days** before production access. Older/organization accounts are exempt. This decides the whole timeline.
-- [ ] **Verify build on device** — permission gate on first launch, "Markly" gallery album, share chooser, wax-seal icon + themed variant, splash
+- [ ] **Verify build on device** — permission gate on first launch, "Mintmark" gallery album, share chooser, wax-seal icon + themed variant, splash
 
 ## 2. Privacy policy
 
 - [x] Privacy policy screen in the hamburger menu (`src/app/(drawer)/privacy.tsx`) — accurate: app makes no network calls at all
-- [x] **Hosted at a public URL** (2026-07-10): `https://portfolio-website-xi-inky.vercel.app/markly/privacy` — paste this into Play Console. Source lives in the portfolio repo (`markly/privacy/index.html`); keep the URL alive. A dedicated Markly site can replace it later (the Play Console URL is editable anytime).
+- [x] **Hosted at a public URL** (2026-07-10): `https://portfolio-website-xi-inky.vercel.app/mintmark/privacy` — paste this into Play Console. Source lives in the portfolio repo (`mintmark/privacy/index.html`); keep the URL alive. A dedicated Mintmark site can replace it later (the Play Console URL is editable anytime).
 - [ ] **Add a contact email back to the privacy policy** — the personal Gmail was removed from the in-app "Changes and contact" section (2026-07-15). Before submission, add a public-facing contact address (consider a dedicated alias rather than the personal inbox) to both the in-app screen and the hosted copy in the portfolio repo. Play Console requires a public contact email in the listing anyway.
 
 ## 3. Store listing assets
@@ -43,8 +43,8 @@ One AAB serves all tracks — upload once, then **promote the same release** bet
 
 ## Notes
 
-- Account deletion page: **not required** — Play's rule only applies to apps with user account creation. Markly has no accounts/server.
-- Package ID `com.markly.app` is permanent after first Play upload.
+- Account deletion page: **not required** — Play's rule only applies to apps with user account creation. Mintmark has no accounts/server.
+- Package ID `com.mintmark.app` is permanent after first Play upload.
 - First AAB upload enrolls the app in **Play App Signing** — Google holds the app signing key; the local keystore becomes the upload key. Still back it up.
 - "Free" is permanent on Play — a free app can never become paid (in-app purchases would still be possible).
-- Project now lives under `@samanthamasara1234/markly` (EAS projectId `e7ad425b-2ce0-458b-963c-21d309660daa`).
+- Project now lives under `@samanthamasara1234/mintmark` (EAS projectId `31edb9f1-c4b2-4ed7-bbeb-cca19fe18e95`).

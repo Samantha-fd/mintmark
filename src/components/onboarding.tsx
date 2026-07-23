@@ -113,11 +113,11 @@ export function Onboarding({ onDone }: { onDone: (target: OnboardingTarget) => v
               <Ionicons name="images-outline" size={30} color={theme.accent} />
             </View>
             <Text style={[styles.title, { color: theme.text }]}>
-              Markly works with your photos
+              Mintmark works with your photos
             </Text>
             <Text style={[styles.sub, { color: theme.textMuted }]}>
               Pick pictures, stamp them, save them back. Nothing ever leaves
-              your phone — Markly has no servers.
+              your phone — Mintmark has no servers.
             </Text>
             <View style={styles.lockRow}>
               <Ionicons name="lock-closed" size={13} color={theme.accent} />
@@ -127,7 +127,7 @@ export function Onboarding({ onDone }: { onDone: (target: OnboardingTarget) => v
             </View>
             <Text style={[styles.footnote, { color: theme.textMuted }]}>
               Stamped photos are also backed up to your phone gallery — you can
-              change that in Settings. Photos kept only in Markly are lost if
+              change that in Settings. Photos kept only in Mintmark are lost if
               the app is ever uninstalled.
             </Text>
           </View>

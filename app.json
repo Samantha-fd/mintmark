@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Markly",
-    "slug": "markly",
+    "name": "Mintmark",
+    "slug": "mintmark",
     "owner": "samanthamasara1234",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "markly",
+    "scheme": "mintmark",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png"
     },
     "android": {
-      "package": "com.markly.app",
+      "package": "com.mintmark.app",
       "adaptiveIcon": {
         "backgroundColor": "#FAF7F2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -24,7 +24,9 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_VIDEO"
       ],
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
@@ -47,13 +49,13 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Markly needs access to your photos so you can add your logo to them."
+          "photosPermission": "Mintmark needs access to your photos so you can add your logo to them."
         }
       ],
       [
         "expo-media-library",
         {
-          "savePhotosPermission": "Markly saves your marked photos and videos to your gallery.",
+          "savePhotosPermission": "Mintmark saves your marked photos and videos to your gallery.",
           "isAccessMediaLocationEnabled": false,
           "granularPermissions": [
             "photo",
@@ -71,7 +73,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e7ad425b-2ce0-458b-963c-21d309660daa"
+        "projectId": "31edb9f1-c4b2-4ed7-bbeb-cca19fe18e95"
       }
     }
   }

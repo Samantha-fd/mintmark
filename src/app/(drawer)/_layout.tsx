@@ -23,7 +23,7 @@ export default function DrawerLayout() {
       <Drawer.Screen
         name="index"
         options={{
-          title: 'Markly',
+          title: 'Mintmark',
           drawerLabel: 'Home',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />

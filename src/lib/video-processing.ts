@@ -65,7 +65,7 @@ export function stampVideo(opts: StampVideoOptions): StampVideoHandle {
     return {
       promise: Promise.reject(
         new Error(
-          'Video stamping needs the installed Markly app — the Expo Go preview cannot process video.',
+          'Video stamping needs the installed Mintmark app — the Expo Go preview cannot process video.',
         ),
       ),
       cancel: () => {},

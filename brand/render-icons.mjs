@@ -16,12 +16,12 @@ const onCanvas = (size, background, input) =>
     .png();
 
 // 1024 app icon: cream square, seal at 82%
-await onCanvas(1024, cream, await renderSvg('./markly-seal.svg', 840)).toFile(
+await onCanvas(1024, cream, await renderSvg('./mintmark-seal.svg', 840)).toFile(
   p('../assets/images/icon.png'),
 );
 
 // Android adaptive foreground: transparent, seal inside the 66% safe zone
-await onCanvas(1024, transparent, await renderSvg('./markly-seal.svg', 600)).toFile(
+await onCanvas(1024, transparent, await renderSvg('./mintmark-seal.svg', 600)).toFile(
   p('../assets/images/android-icon-foreground.png'),
 );
 
@@ -31,18 +31,18 @@ await sharp({ create: { width: 1024, height: 1024, channels: 4, background: crea
   .toFile(p('../assets/images/android-icon-background.png'));
 
 // Android 13+ themed icon: white silhouette with knocked-out ring and m
-await onCanvas(1024, transparent, await renderSvg('./markly-seal-mono.svg', 600)).toFile(
+await onCanvas(1024, transparent, await renderSvg('./mintmark-seal-mono.svg', 600)).toFile(
   p('../assets/images/android-icon-monochrome.png'),
 );
 
 // splash logo and favicon
-await sharp(p('./markly-seal.svg'), { density: DENSITY })
+await sharp(p('./mintmark-seal.svg'), { density: DENSITY })
   .resize(512, 512)
   .png()
   .toFile(p('../assets/images/splash-icon.png'));
-await sharp(p('./markly-seal.svg'), { density: DENSITY })
+await sharp(p('./mintmark-seal.svg'), { density: DENSITY })
   .resize(48, 48)
   .png()
   .toFile(p('../assets/images/favicon.png'));
 
-console.log('All Markly icon assets rendered.');
+console.log('All Mintmark icon assets rendered.');

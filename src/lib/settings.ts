@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEY = 'settings:v1';
 
 export type Settings = {
-  /** also save every stamped photo to the phone's gallery (the Markly album) */
+  /** also save every stamped photo to the phone's gallery (the Mintmark album) */
   phoneGalleryBackup: boolean;
 };
 
