@@ -23,16 +23,20 @@ const blush = '#EFC9B8';
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-const INTER_BOLD = p('../node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf');
-const INTER_SEMI = p('../node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf');
+// Palatino Linotype (system font): a calligraphic old-style serif that
+// matches the wax-seal identity far better than a geometric sans.
+const SERIF_BOLD_ITALIC = 'C:/Windows/Fonts/palabi.ttf';
+const SERIF_BOLD = 'C:/Windows/Fonts/palab.ttf';
+const SERIF_ITALIC = 'C:/Windows/Fonts/palai.ttf';
+const FAMILY = 'Palatino Linotype';
 
-/** text rendered by pango with an explicit Inter fontfile (no fontconfig) */
-const text = (str, { color, size, fontfile = INTER_BOLD, width = W }) =>
+/** text rendered by pango with an explicit fontfile (no fontconfig) */
+const text = (str, { color, size, fontfile = SERIF_BOLD_ITALIC, width = W, tracking = 0 }) =>
   sharp({
     text: {
-      text: `<span foreground="${color}">${esc(str)}</span>`,
+      text: `<span foreground="${color}" letter_spacing="${tracking}">${esc(str)}</span>`,
       fontfile,
-      font: `Inter ${Math.round(size * 0.75)}`, // pango pt ≈ px * 0.75
+      font: `${FAMILY} ${Math.round(size * 0.75)}`, // pango pt ≈ px * 0.75
       width,
       align: 'centre',
       rgba: true,
@@ -43,9 +47,9 @@ const text = (str, { color, size, fontfile = INTER_BOLD, width = W }) =>
 
 /** centred caption block; returns a composite layer */
 const captionLayer = async (lines, color) => {
-  const img = await text(lines.join('\n'), { color, size: 84 });
+  const img = await text(lines.join('\n'), { color, size: 94 });
   const { width } = await sharp(img).metadata();
-  return { input: img, left: Math.round((W - width) / 2), top: 120 };
+  return { input: img, left: Math.round((W - width) / 2), top: 110 };
 };
 
 const roundedMask = (w, h, r) =>
@@ -109,7 +113,7 @@ async function splitCard(beforeFile, afterFile, outName) {
     const scaled = await sharp(crop).resize({ width: panelW }).toBuffer();
     const img = await rounded(scaled, 36);
     const { height } = await sharp(img).metadata();
-    const tag = await text(label, { color: '#8A7A6D', size: 44, fontfile: INTER_SEMI, width: panelW });
+    const tag = await text(label, { color: '#8A7A6D', size: 46, fontfile: SERIF_ITALIC, width: panelW });
     return { img, height, tag };
   };
   const before = await half(beforeFile, 'before');
@@ -172,16 +176,25 @@ async function featureGraphic() {
     .rotate(-5, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .toBuffer();
   const seal = await sharp(p('./mintmark-seal.svg'), { density: 800 })
-    .resize(120, 120)
+    .resize(140, 140)
     .png()
     .toBuffer();
-  const wordmark = await text('Mintmark', { color: cocoa, size: 96, width: 620 });
+  const wordmark = await text('Mintmark', {
+    color: cocoa,
+    size: 104,
+    fontfile: SERIF_BOLD,
+    width: 620,
+    tracking: 2048,
+  });
   const tagline = await text('your logo on every photo', {
     color: '#8A7A6D',
-    size: 36,
-    fontfile: INTER_SEMI,
+    size: 40,
+    fontfile: SERIF_ITALIC,
     width: 620,
   });
+  const rule = Buffer.from(
+    `<svg width="300" height="6"><rect width="300" height="4" rx="2" fill="${terracotta}"/></svg>`,
+  );
   await sharp({ create: { width: 1024, height: 500, channels: 4, background: cream } })
     .composite([
       {
@@ -192,9 +205,10 @@ async function featureGraphic() {
         left: 0,
         top: 0,
       },
-      { input: seal, left: 96, top: 96 },
-      { input: wordmark, left: 96, top: 252 },
-      { input: tagline, left: 99, top: 366 },
+      { input: seal, left: 96, top: 78 },
+      { input: wordmark, left: 96, top: 236 },
+      { input: rule, left: 100, top: 372 },
+      { input: tagline, left: 100, top: 396 },
       { input: tilted, left: 630, top: 40 },
     ])
     .flatten({ background: cream })
