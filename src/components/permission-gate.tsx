@@ -21,9 +21,9 @@ export function PermissionGate({ children }: PropsWithChildren) {
 
   const check = useCallback(async () => {
     try {
-      // photos + videos — the default also asks for audio, which is not
-      // declared in the manifest and gets rejected
-      const p = await MediaLibrary.getPermissionsAsync(false, ['photo', 'video']);
+      // photos only — the default also asks for audio/video, which are not
+      // declared in the manifest (video stamping is shelved) and get rejected
+      const p = await MediaLibrary.getPermissionsAsync(false, ['photo']);
       setCanAskAgain(p.canAskAgain);
       setState(p.granted ? 'ready' : 'blocked');
     } catch {
@@ -44,7 +44,7 @@ export function PermissionGate({ children }: PropsWithChildren) {
 
   const request = async () => {
     try {
-      const p = await MediaLibrary.requestPermissionsAsync(false, ['photo', 'video']);
+      const p = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
       setCanAskAgain(p.canAskAgain);
       setState(p.granted ? 'ready' : 'blocked');
     } catch {
