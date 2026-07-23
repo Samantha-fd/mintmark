@@ -7,6 +7,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useToast } from '@/components/toast';
 import { useTheme } from '@/hooks/use-theme';
+import { VIDEO_STAMPING_ENABLED } from '@/lib/flags';
 import { listLogos } from '@/lib/logo-store';
 import { encodePhotos } from '@/lib/photo-params';
 import { listStamped } from '@/lib/stamped-store';
@@ -32,14 +33,16 @@ export default function HomeScreen() {
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: VIDEO_STAMPING_ENABLED ? ['images', 'videos'] : ['images'],
       quality: 1,
       allowsMultipleSelection: true,
       selectionLimit: 20,
       orderedSelection: true,
     });
     if (result.canceled) return;
-    const video = result.assets.find((a) => a.type === 'video');
+    const video = VIDEO_STAMPING_ENABLED
+      ? result.assets.find((a) => a.type === 'video')
+      : undefined;
     if (video) {
       if (result.assets.length > 1) {
         toast('Videos are stamped one at a time — using the first video', 'info');
