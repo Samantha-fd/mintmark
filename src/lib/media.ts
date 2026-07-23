@@ -9,10 +9,16 @@ export const ALBUM_NAME = 'Mintmark';
  */
 export async function saveToGalleryAlbum(fileUri: string): Promise<void> {
   // photos only — the default set also asks for audio/video, which are not
-  // declared in the manifest (video stamping is shelved) and get rejected
+  // declared in the manifest (video stamping is shelved) and get rejected.
+  // Check before requesting: re-requesting on every save re-opens the
+  // system dialog for users on Android 14+ "limited access", so the ask
+  // happens at onboarding and only ever repeats if access was revoked.
   let perm: MediaLibrary.EXPermissionResponse;
   try {
-    perm = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+    perm = await MediaLibrary.getPermissionsAsync(false, ['photo']);
+    if (!perm.granted && perm.canAskAgain) {
+      perm = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
+    }
   } catch {
     // media library is entirely unavailable in Expo Go on Android
     throw new Error(
